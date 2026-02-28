@@ -46,7 +46,7 @@ export default function LoginPage() {
           {/* Top strip */}
           <div className="bg-[#011B5E] px-8 py-6 text-white text-center">
             <div className="flex justify-center mb-4">
-              <RBBLogo inverted />
+              <RBBLogo inverted maxWidth="220px" />
             </div>
             <h1 className="text-lg font-bold mt-2">Back Office Portal</h1>
             <p className="text-blue-200 text-sm mt-1">Staff Access Only</p>

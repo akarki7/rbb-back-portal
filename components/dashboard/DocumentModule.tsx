@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import {
   CheckCircle, XCircle, Clock, FileText, Package, AlertCircle,
-  User, Calendar, Upload, X, ExternalLink, Eye,
+  User, Calendar, X, ExternalLink, Eye,
 } from 'lucide-react';
 
 interface Document {
@@ -59,27 +59,13 @@ const stageColors = [
 
 const FAKE_PDF_URL = 'https://pdfobject.com/pdf/sample.pdf';
 
-// Infer a document type from file extension / name
-function inferType(filename: string): string {
-  const lower = filename.toLowerCase();
-  if (lower.endsWith('.pdf')) return 'PDF Document';
-  if (lower.endsWith('.docx') || lower.endsWith('.doc')) return 'Word Document';
-  if (lower.endsWith('.xlsx') || lower.endsWith('.xls')) return 'Spreadsheet';
-  if (lower.includes('invoice')) return 'Invoice';
-  if (lower.includes('contract')) return 'Vendor Contract';
-  if (lower.includes('loan')) return 'Loan Application';
-  if (lower.includes('budget')) return 'Budget Proposal';
-  return 'Uploaded Document';
-}
-
 export default function DocumentModule() {
   const [documents, setDocuments] = useState<Document[]>(initialDocuments);
   const [auditTrail, setAuditTrail] = useState<AuditEntry[]>(initialAuditTrail);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [pdfModal, setPdfModal] = useState<{ name: string } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+  const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
   };
@@ -111,54 +97,17 @@ export default function DocumentModule() {
     );
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const baseName = file.name.replace(/\.[^/.]+$/, '');
-    const newDoc: Document = {
-      id: `DOC-2025-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-      name: baseName,
-      type: inferType(file.name),
-      submittedBy: 'Admin User',
-      department: 'General',
-      date: new Date().toISOString().split('T')[0],
-      status: 'pending',
-    };
-
-    setDocuments((prev) => [newDoc, ...prev]);
-    showToast(`"${baseName}" uploaded and added to the approval queue.`, 'info');
-
-    // Reset so the same file can be re-uploaded
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
   const pendingDocs = documents.filter((d) => d.status === 'pending');
   const processedDocs = documents.filter((d) => d.status !== 'pending');
 
-  const toastColors: Record<string, string> = {
-    success: 'bg-emerald-600 text-white',
-    error: 'bg-red-600 text-white',
-    info: 'bg-[#011B5E] text-white',
-  };
-
   return (
     <div className="space-y-6 relative">
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
-        className="hidden"
-        onChange={handleFileUpload}
-      />
-
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium animate-fade-in ${toastColors[toast.type]}`}>
-          {toast.type === 'success' && <CheckCircle size={16} />}
-          {toast.type === 'error' && <XCircle size={16} />}
-          {toast.type === 'info' && <Upload size={16} />}
+        <div className={`fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium animate-fade-in ${
+          toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          {toast.type === 'success' ? <CheckCircle size={16} /> : <XCircle size={16} />}
           {toast.message}
         </div>
       )}
@@ -238,21 +187,12 @@ export default function DocumentModule() {
                 {pendingDocs.length} document{pendingDocs.length !== 1 ? 's' : ''} awaiting your decision
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              {pendingDocs.length > 0 && (
-                <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-medium">
-                  <AlertCircle size={12} />
-                  Action Required
-                </span>
-              )}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 text-xs bg-[#011B5E] text-white px-3 py-1.5 rounded-lg hover:bg-[#0a2d8f] transition-colors font-medium"
-              >
-                <Upload size={13} />
-                Upload
-              </button>
-            </div>
+            {pendingDocs.length > 0 && (
+              <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-medium">
+                <AlertCircle size={12} />
+                Action Required
+              </span>
+            )}
           </div>
 
           <div className="divide-y divide-gray-50">
@@ -261,13 +201,6 @@ export default function DocumentModule() {
                 <CheckCircle className="mx-auto text-emerald-500 mb-3" size={40} />
                 <p className="font-medium text-gray-700">All documents processed!</p>
                 <p className="text-sm text-gray-400 mt-1">No pending approvals at this time.</p>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mt-4 flex items-center gap-2 mx-auto text-xs text-[#011B5E] border border-[#011B5E]/20 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
-                >
-                  <Upload size={13} />
-                  Upload a new document
-                </button>
               </div>
             ) : (
               pendingDocs.map((doc) => (

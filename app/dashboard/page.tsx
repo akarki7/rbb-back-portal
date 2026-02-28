@@ -161,8 +161,8 @@ export default function DashboardPage() {
       {/* Sidebar */}
       <aside className="w-60 bg-[#011B5E] flex flex-col flex-shrink-0 z-30">
         {/* Logo */}
-        <div className="px-5 py-5 border-b border-white/10">
-          <RBBLogo inverted />
+        <div className="px-4 py-4 border-b border-white/10">
+          <RBBLogo inverted maxWidth="192px" />
         </div>
 
         {/* Nav */}

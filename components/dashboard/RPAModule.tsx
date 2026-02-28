@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Clock, TrendingUp, RefreshCw, CheckCircle, Loader, Calendar, ChevronRight } from 'lucide-react';
+import { FileText, Clock, TrendingUp, RefreshCw, CheckCircle, Loader, Calendar, Download } from 'lucide-react';
 
 const reportData = [
   { id: 'RPT-2025-0156', name: 'Daily Transaction Summary', type: 'CBS Report', generated: '2025-02-28 08:00', status: 'Completed', size: '2.3 MB' },
@@ -86,6 +86,7 @@ export default function RPAModule() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Generated</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">File</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -110,6 +111,22 @@ export default function RPAModule() {
                         {r.status === 'Completed' && <CheckCircle size={10} />}
                         {r.status}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {r.status === 'Completed' ? (
+                        <a
+                          href="https://pdfobject.com/pdf/sample.pdf"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`Download ${r.name}`}
+                          className="inline-flex items-center gap-1.5 text-xs text-[#011B5E] border border-[#011B5E]/20 hover:bg-[#011B5E] hover:text-white px-2.5 py-1 rounded-lg transition-colors font-medium"
+                        >
+                          <Download size={11} />
+                          {r.size}
+                        </a>
+                      ) : (
+                        <span className="text-xs text-gray-300">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -168,35 +185,6 @@ export default function RPAModule() {
             </div>
           </div>
 
-          {/* Staff Hours Saved Trend */}
-          <div className="bg-gradient-to-br from-[#011B5E] to-[#0a2d8f] rounded-xl p-5 text-white">
-            <p className="text-xs text-blue-200 font-medium">Monthly Staff Hours Saved</p>
-            <div className="flex items-end gap-1 mt-3">
-              {[820, 950, 1020, 1100, 1248].map((v, i) => (
-                <div key={i} className="flex flex-col items-center gap-1 flex-1">
-                  <div
-                    className="w-full bg-white/20 rounded-sm"
-                    style={{ height: `${(v / 1248) * 60}px` }}
-                  />
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between mt-1">
-              {['Oct', 'Nov', 'Dec', 'Jan', 'Feb'].map((m) => (
-                <span key={m} className="text-[10px] text-blue-300">{m}</span>
-              ))}
-            </div>
-            <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold">1,248</p>
-                <p className="text-xs text-blue-200">hours saved this month</p>
-              </div>
-              <div className="flex items-center gap-1 text-emerald-300 text-xs font-medium">
-                <TrendingUp size={14} />
-                +13.5% vs last month
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

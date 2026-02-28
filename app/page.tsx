@@ -100,14 +100,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            <img
-              src="https://www.rbb.com.np/uploads/config/1731390437-339067.png"
-              alt="RBB Logo"
-              className="h-10 object-contain"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
+            <img src="/rbb-logo.png" alt="RBB Logo" className="h-10 object-contain" />
             <div className="hidden sm:block">
               <p className="text-sm font-bold text-[#011B5E] leading-tight">Rastriya Banijya Bank</p>
               <p className="text-[10px] text-gray-500 leading-tight">Nepal's Trusted Bank</p>
