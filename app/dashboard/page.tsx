@@ -313,11 +313,6 @@ export default function DashboardPage() {
                   Export Status Report
                 </button>
               )}
-              {activeModule === 'documents' && (
-                <button className="text-xs border border-[#011B5E] text-[#011B5E] px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors font-medium">
-                  Upload Document
-                </button>
-              )}
             </div>
           </div>
         </div>
