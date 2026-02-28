@@ -8,6 +8,7 @@ import {
   Star, Users, Building2, Award, ChevronDown
 } from 'lucide-react';
 import ChatWidget from '@/components/ChatWidget';
+import RBBLogo from '@/components/RBBLogo';
 
 const navLinks = ['Home', 'About', 'Services', 'Branches & ATMs', 'Contact'];
 
@@ -441,14 +442,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-10">
             <div className="lg:col-span-1">
-              <img
-                src="https://www.rbb.com.np/uploads/config/1731390437-339067.png"
-                alt="RBB"
-                className="h-10 object-contain mb-4 brightness-0 invert"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
+              <RBBLogo inverted className="mb-4" />
               <p className="text-sm text-blue-200 leading-relaxed">
                 Rastriya Banijya Bank — Nepal's premier government-owned commercial bank, serving the nation since 1966.
               </p>

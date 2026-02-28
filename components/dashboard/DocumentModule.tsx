@@ -1,7 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { CheckCircle, XCircle, Clock, FileText, Package, AlertCircle, ChevronRight, User, Calendar } from 'lucide-react';
+import { useState, useRef } from 'react';
+import {
+  CheckCircle, XCircle, Clock, FileText, Package, AlertCircle,
+  User, Calendar, Upload, X, ExternalLink, Eye,
+} from 'lucide-react';
 
 interface Document {
   id: string;
@@ -54,23 +57,38 @@ const stageColors = [
   'bg-emerald-100 text-emerald-700',
 ];
 
+const FAKE_PDF_URL = 'https://pdfobject.com/pdf/sample.pdf';
+
+// Infer a document type from file extension / name
+function inferType(filename: string): string {
+  const lower = filename.toLowerCase();
+  if (lower.endsWith('.pdf')) return 'PDF Document';
+  if (lower.endsWith('.docx') || lower.endsWith('.doc')) return 'Word Document';
+  if (lower.endsWith('.xlsx') || lower.endsWith('.xls')) return 'Spreadsheet';
+  if (lower.includes('invoice')) return 'Invoice';
+  if (lower.includes('contract')) return 'Vendor Contract';
+  if (lower.includes('loan')) return 'Loan Application';
+  if (lower.includes('budget')) return 'Budget Proposal';
+  return 'Uploaded Document';
+}
+
 export default function DocumentModule() {
   const [documents, setDocuments] = useState<Document[]>(initialDocuments);
   const [auditTrail, setAuditTrail] = useState<AuditEntry[]>(initialAuditTrail);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [pdfModal, setPdfModal] = useState<{ name: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const showToast = (message: string, type: 'success' | 'error') => {
+  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 3500);
   };
 
   const handleAction = (docId: string, action: 'approved' | 'rejected') => {
     const doc = documents.find((d) => d.id === docId);
     if (!doc) return;
 
-    setDocuments((prev) =>
-      prev.map((d) => (d.id === docId ? { ...d, status: action } : d))
-    );
+    setDocuments((prev) => prev.map((d) => (d.id === docId ? { ...d, status: action } : d)));
 
     const now = new Date();
     const timestamp = `${now.toISOString().split('T')[0]} ${now.toTimeString().split(' ')[0]}`;
@@ -88,23 +106,103 @@ export default function DocumentModule() {
     ]);
 
     showToast(
-      `Document "${doc.name.substring(0, 30)}..." has been ${action}.`,
+      `"${doc.name.length > 35 ? doc.name.substring(0, 35) + '…' : doc.name}" ${action}.`,
       action === 'approved' ? 'success' : 'error'
     );
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const baseName = file.name.replace(/\.[^/.]+$/, '');
+    const newDoc: Document = {
+      id: `DOC-2025-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+      name: baseName,
+      type: inferType(file.name),
+      submittedBy: 'Admin User',
+      department: 'General',
+      date: new Date().toISOString().split('T')[0],
+      status: 'pending',
+    };
+
+    setDocuments((prev) => [newDoc, ...prev]);
+    showToast(`"${baseName}" uploaded and added to the approval queue.`, 'info');
+
+    // Reset so the same file can be re-uploaded
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const pendingDocs = documents.filter((d) => d.status === 'pending');
   const processedDocs = documents.filter((d) => d.status !== 'pending');
 
+  const toastColors: Record<string, string> = {
+    success: 'bg-emerald-600 text-white',
+    error: 'bg-red-600 text-white',
+    info: 'bg-[#011B5E] text-white',
+  };
+
   return (
     <div className="space-y-6 relative">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium animate-fade-in ${
-          toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
-        }`}>
-          {toast.type === 'success' ? <CheckCircle size={16} /> : <XCircle size={16} />}
+        <div className={`fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium animate-fade-in ${toastColors[toast.type]}`}>
+          {toast.type === 'success' && <CheckCircle size={16} />}
+          {toast.type === 'error' && <XCircle size={16} />}
+          {toast.type === 'info' && <Upload size={16} />}
           {toast.message}
+        </div>
+      )}
+
+      {/* PDF Viewer Modal */}
+      {pdfModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col animate-fade-in" style={{ height: '88vh' }}>
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FileText size={18} className="text-red-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-gray-900 truncate">{pdfModal.name}</p>
+                  <p className="text-xs text-gray-400">PDF Document · Read-only preview</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+                <a
+                  href={FAKE_PDF_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs text-[#011B5E] border border-[#011B5E]/20 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+                >
+                  <ExternalLink size={13} />
+                  Open in new tab
+                </a>
+                <button
+                  onClick={() => setPdfModal(null)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            {/* PDF iframe */}
+            <iframe
+              src={`${FAKE_PDF_URL}#toolbar=0`}
+              className="flex-1 w-full rounded-b-2xl"
+              title={pdfModal.name}
+            />
+          </div>
         </div>
       )}
 
@@ -140,12 +238,21 @@ export default function DocumentModule() {
                 {pendingDocs.length} document{pendingDocs.length !== 1 ? 's' : ''} awaiting your decision
               </p>
             </div>
-            {pendingDocs.length > 0 && (
-              <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-medium">
-                <AlertCircle size={12} />
-                Action Required
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {pendingDocs.length > 0 && (
+                <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-medium">
+                  <AlertCircle size={12} />
+                  Action Required
+                </span>
+              )}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1.5 text-xs bg-[#011B5E] text-white px-3 py-1.5 rounded-lg hover:bg-[#0a2d8f] transition-colors font-medium"
+              >
+                <Upload size={13} />
+                Upload
+              </button>
+            </div>
           </div>
 
           <div className="divide-y divide-gray-50">
@@ -154,10 +261,17 @@ export default function DocumentModule() {
                 <CheckCircle className="mx-auto text-emerald-500 mb-3" size={40} />
                 <p className="font-medium text-gray-700">All documents processed!</p>
                 <p className="text-sm text-gray-400 mt-1">No pending approvals at this time.</p>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mt-4 flex items-center gap-2 mx-auto text-xs text-[#011B5E] border border-[#011B5E]/20 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+                >
+                  <Upload size={13} />
+                  Upload a new document
+                </button>
               </div>
             ) : (
               pendingDocs.map((doc) => (
-                <div key={doc.id} className="px-5 py-4 hover:bg-gray-50/50 transition-colors">
+                <div key={doc.id} className="px-5 py-4 hover:bg-gray-50/50 transition-colors group">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
@@ -166,7 +280,15 @@ export default function DocumentModule() {
                           <span className="text-xs font-semibold text-[#011B5E]">{doc.amount}</span>
                         )}
                       </div>
-                      <p className="text-sm font-medium text-gray-800">{doc.name}</p>
+                      {/* Clickable document name → opens PDF viewer */}
+                      <button
+                        onClick={() => setPdfModal({ name: doc.name })}
+                        className="text-sm font-medium text-gray-800 hover:text-[#011B5E] hover:underline text-left flex items-center gap-1.5 group/name"
+                        title="Click to preview document"
+                      >
+                        {doc.name}
+                        <Eye size={13} className="text-gray-300 group-hover/name:text-[#011B5E] transition-colors flex-shrink-0" />
+                      </button>
                       <div className="flex items-center gap-3 mt-1">
                         <span className="flex items-center gap-1 text-xs text-gray-500">
                           <User size={10} /> {doc.submittedBy}
@@ -203,7 +325,7 @@ export default function DocumentModule() {
           {processedDocs.length > 0 && (
             <div className="px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
               <p className="text-xs text-gray-500 font-medium">
-                {processedDocs.length} document{processedDocs.length !== 1 ? 's' : ''} processed in this session ·{' '}
+                {processedDocs.length} document{processedDocs.length !== 1 ? 's' : ''} processed ·{' '}
                 <span className="text-emerald-600">{processedDocs.filter(d => d.status === 'approved').length} approved</span>{' · '}
                 <span className="text-red-600">{processedDocs.filter(d => d.status === 'rejected').length} rejected</span>
               </p>
@@ -235,9 +357,7 @@ export default function DocumentModule() {
                     {v.stages.map((_, si) => (
                       <div
                         key={si}
-                        className={`flex-1 h-1 rounded-full transition-all ${
-                          si <= v.stage ? 'bg-[#011B5E]' : 'bg-gray-100'
-                        }`}
+                        className={`flex-1 h-1 rounded-full transition-all ${si <= v.stage ? 'bg-[#011B5E]' : 'bg-gray-100'}`}
                       />
                     ))}
                   </div>
@@ -266,7 +386,14 @@ export default function DocumentModule() {
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-gray-800 truncate">{entry.document}</p>
+                    {/* Clickable document in audit trail → opens PDF too */}
+                    <button
+                      onClick={() => setPdfModal({ name: entry.document })}
+                      className="text-xs font-medium text-gray-800 hover:text-[#011B5E] hover:underline text-left truncate block w-full"
+                      title="Preview document"
+                    >
+                      {entry.document}
+                    </button>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className={`text-[10px] font-semibold capitalize ${
                         entry.action === 'approved' ? 'text-emerald-600' : 'text-red-600'

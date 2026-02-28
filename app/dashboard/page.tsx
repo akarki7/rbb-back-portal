@@ -20,6 +20,7 @@ import {
 import RPAModule from '@/components/dashboard/RPAModule';
 import DocumentModule from '@/components/dashboard/DocumentModule';
 import MonitoringModule from '@/components/dashboard/MonitoringModule';
+import RBBLogo from '@/components/RBBLogo';
 
 type ActiveModule = 'overview' | 'rpa' | 'documents' | 'monitoring';
 
@@ -161,20 +162,7 @@ export default function DashboardPage() {
       <aside className="w-60 bg-[#011B5E] flex flex-col flex-shrink-0 z-30">
         {/* Logo */}
         <div className="px-5 py-5 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <img
-              src="https://www.rbb.com.np/uploads/config/1731390437-339067.png"
-              alt="RBB"
-              className="h-8 object-contain brightness-0 invert flex-shrink-0"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-            <div>
-              <p className="text-xs font-bold text-white leading-tight">RBB</p>
-              <p className="text-[9px] text-blue-300 leading-tight">Back Office Portal</p>
-            </div>
-          </div>
+          <RBBLogo inverted />
         </div>
 
         {/* Nav */}

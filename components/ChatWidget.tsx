@@ -16,6 +16,58 @@ const QUICK_PROMPTS = [
   'Lodge a complaint',
 ];
 
+// Returns an instant fake reply for common banking queries.
+// If the message doesn't match, returns null (falls back to API).
+function getFakeReply(msg: string): string | null {
+  const m = msg.toLowerCase().trim();
+
+  // Greetings
+  if (/^(hi|hello|hey|namaste|namaskar|good\s*(morning|afternoon|evening))/.test(m)) {
+    return 'Namaste! 🙏 Welcome to RBB Sathi. How can I assist you today?\n\nYou can ask me about your **account balance**, **recent transactions**, **loan status**, or **lodge a complaint**.';
+  }
+
+  // Balance
+  if (m.includes('balance') || m.includes('account') || m.includes('check my account')) {
+    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return `Here is your account summary as of **${today}**:\n\n**Savings Account** (No. 00101-010-0123456)\nAvailable Balance: **NPR 45,230.75**\nStatus: Active ✅\n\n**Current Account** (No. 00101-020-0789012)\nAvailable Balance: **NPR 1,23,500.00**\nStatus: Active ✅\n\nFor full account details, please visit your nearest RBB branch or use **Internet Banking** at ibk.rbb.com.np.`;
+  }
+
+  // Transactions
+  if (m.includes('transaction') || m.includes('history') || m.includes('recent') || m.includes('statement')) {
+    return `Your **last 5 transactions** (Savings Account):\n\n1. **20 Feb 2025** · Salary Credit · +NPR 85,000.00\n2. **18 Feb 2025** · ATM Withdrawal, Thamel · -NPR 10,000.00\n3. **15 Feb 2025** · NEA Electricity Bill · -NPR 2,300.00\n4. **12 Feb 2025** · IME Remittance Sent · -NPR 15,000.00\n5. **10 Feb 2025** · FD Maturity Credit · +NPR 52,500.00\n\nFor a full statement, visit **Internet Banking** or request at your branch.`;
+  }
+
+  // Loan
+  if (m.includes('loan') || m.includes('emi') || m.includes('repayment') || m.includes('credit')) {
+    return `Your **active loan accounts**:\n\n🏠 **Home Loan** (HL-2021-0847)\n• Original Amount: NPR 25,00,000\n• Outstanding: NPR 10,00,000\n• Repaid: **60%** ████████░░\n• EMI: NPR 21,500/month\n• Next Due: **15 March 2025**\n\n💳 **Personal Loan** (PL-2023-1234)\n• Original Amount: NPR 3,00,000\n• Outstanding: NPR 2,25,000\n• Repaid: **25%** ███░░░░░░░\n• EMI: NPR 8,500/month\n• Next Due: **5 March 2025**\n\nTo pre-pay or restructure, please visit your branch.`;
+  }
+
+  // Complaint
+  if (m.includes('complaint') || m.includes('lodge') || m.includes('report') || m.includes('issue') || m.includes('problem') || m.includes('wrong') || m.includes('error')) {
+    const ticketNum = Math.floor(10000 + Math.random() * 90000);
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return `Your complaint has been **registered successfully**! ✅\n\n**Ticket No:** RBB-COMP-2025-${ticketNum}\n**Date:** ${dateStr}\n**Priority:** Standard\n**Status:** Open 🟡\n\nOur team will review your complaint within **3 business days**. You will receive an SMS update on your registered mobile number.\n\nFor urgent matters, please call **1660-01-00001** (Toll-free, 24/7).`;
+  }
+
+  // Thank you
+  if (/thank|thanks|shukriya|dhanyabad/.test(m)) {
+    return 'You are most welcome! 😊 Is there anything else I can help you with today?\n\nRemember, RBB is always here for you — **1660-01-00001** (24/7 helpline).';
+  }
+
+  // ATM
+  if (m.includes('atm') || m.includes('cash')) {
+    return 'Your **nearest RBB ATMs**:\n\n📍 New Road, Kathmandu — 0.3 km · **Online** ✅\n📍 Thamel — 0.8 km · **Online** ✅\n📍 Chabahil — 1.2 km · **Online** ✅\n\nAll RBB ATMs are available 24/7. Daily withdrawal limit: **NPR 50,000**.\n\nFor more ATM locations, use the **RBB Branch Locator** on our website.';
+  }
+
+  // Interest rate
+  if (m.includes('interest') || m.includes('rate') || m.includes('fd') || m.includes('fixed deposit')) {
+    return 'Current **RBB Interest Rates** (effective Feb 2025):\n\n**Savings Account:** 5.5% p.a.\n**Fixed Deposit:**\n• 3 months: 7.25% p.a.\n• 6 months: 8.50% p.a.\n• 1 year: 9.75% p.a.\n• 2 years: 10.25% p.a.\n\n**Home Loan:** Starting from 9.99% p.a.\n**Personal Loan:** Starting from 14.5% p.a.\n\nRates are subject to change. Contact your branch for the latest rates.';
+  }
+
+  return null; // No local match — will call the API
+}
+
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -56,6 +108,21 @@ export default function ChatWidget() {
     setInputValue('');
     setIsLoading(true);
 
+    // Check for local fake reply first (instant, no API needed)
+    const localReply = getFakeReply(text.trim());
+    if (localReply) {
+      // Simulate a short typing delay so it feels natural
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: localReply, timestamp: new Date() },
+        ]);
+        setIsLoading(false);
+      }, 700);
+      return;
+    }
+
+    // Fallback: call the Claude API for unrecognised queries
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',

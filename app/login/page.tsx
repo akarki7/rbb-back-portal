@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, ShieldCheck } from 'lucide-react';
+import RBBLogo from '@/components/RBBLogo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,17 +46,10 @@ export default function LoginPage() {
           {/* Top strip */}
           <div className="bg-[#011B5E] px-8 py-6 text-white text-center">
             <div className="flex justify-center mb-4">
-              <img
-                src="https://www.rbb.com.np/uploads/config/1731390437-339067.png"
-                alt="RBB"
-                className="h-12 object-contain brightness-0 invert"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
+              <RBBLogo inverted />
             </div>
-            <h1 className="text-lg font-bold">Back Office Portal</h1>
-            <p className="text-blue-200 text-sm mt-1">Rastriya Banijya Bank — Staff Access</p>
+            <h1 className="text-lg font-bold mt-2">Back Office Portal</h1>
+            <p className="text-blue-200 text-sm mt-1">Staff Access Only</p>
           </div>
 
           {/* Form */}
